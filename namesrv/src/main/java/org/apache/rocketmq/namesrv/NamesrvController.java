@@ -74,18 +74,21 @@ public class NamesrvController {
     }
 
     public boolean initialize() {
-
+        // liuyunMark 加载已有的配置数据
         this.kvConfigManager.load();
 
+        // liuyunMark 定义netty服务端配置
         this.remotingServer = new NettyRemotingServer(this.nettyServerConfig, this.brokerHousekeepingService);
-
+        // nettty的工作线程定义
         this.remotingExecutor =
             Executors.newFixedThreadPool(nettyServerConfig.getServerWorkerThreads(), new ThreadFactoryImpl("RemotingExecutorThread_"));
-
+        // 设置请求处理器与工作线程的映射
         this.registerProcessor();
 
+        // liuyunMark 定义定时任务：扫描不活动的broker，频率：每隔10秒
         this.scheduledExecutorService.scheduleAtFixedRate(NamesrvController.this.routeInfoManager::scanNotActiveBroker, 5, 10, TimeUnit.SECONDS);
 
+        // liuyunMark 定义定时任务：打印kvconfig，频率：每隔10分
         this.scheduledExecutorService.scheduleAtFixedRate(NamesrvController.this.kvConfigManager::printAllPeriodically, 1, 10, TimeUnit.MINUTES);
 
         if (TlsSystemConfig.tlsMode != TlsMode.DISABLED) {
@@ -141,6 +144,7 @@ public class NamesrvController {
     }
 
     public void start() throws Exception {
+        // liuyunMark 启动netty服务器：NettyRemotingServer.start
         this.remotingServer.start();
 
         if (this.fileWatchService != null) {

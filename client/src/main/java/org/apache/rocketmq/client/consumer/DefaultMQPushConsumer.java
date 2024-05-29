@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
+
 import org.apache.rocketmq.client.ClientConfig;
 import org.apache.rocketmq.client.QueryResult;
 import org.apache.rocketmq.client.consumer.listener.MessageListener;
@@ -49,11 +50,11 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 /**
  * In most scenarios, this is the mostly recommended class to consume messages.
  * </p>
- *
+ * <p>
  * Technically speaking, this push client is virtually a wrapper of the underlying pull service. Specifically, on
  * arrival of messages pulled from brokers, it roughly invokes the registered callback handler to feed the messages.
  * </p>
- *
+ * <p>
  * See quickstart/Consumer in the example module for a typical usage.
  * </p>
  *
@@ -74,7 +75,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * Consumers of the same role is required to have exactly same subscriptions and consumerGroup to correctly achieve
      * load balance. It's required and needs to be globally unique.
      * </p>
-     *
+     * <p>
      * See <a href="http://rocketmq.apache.org/docs/core-concept/">here</a> for further discussion.
      */
     private String consumerGroup;
@@ -82,13 +83,13 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Message model defines the way how messages are delivered to each consumer clients.
      * </p>
-     *
+     * <p>
      * RocketMQ supports two message models: clustering and broadcasting. If clustering is set, consumer clients with
      * the same {@link #consumerGroup} would only consume shards of the messages subscribed, which achieves load
      * balances; Conversely, if the broadcasting is set, each consumer client will consume all subscribed messages
      * separately.
      * </p>
-     *
+     * <p>
      * This field defaults to clustering.
      */
     private MessageModel messageModel = MessageModel.CLUSTERING;
@@ -96,7 +97,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Consuming point on consumer booting.
      * </p>
-     *
+     * <p>
      * There are three consuming points:
      * <ul>
      * <li>
@@ -233,14 +234,17 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Whether the unit of subscription group
+     * liuyunMark
+     * unitMode 是 org.apache.rocketmq.client.consumer.DefaultMQPushConsumer 类中的一个属性，它通常用来控制消费者实例的行为，特别是在集群环境下的工作模式。如果 unitMode 设置为 true，那么消费者将以单元化（Unit）模式运行。在单元化模式下，每个消费者实例将被限制只能消费一个消息队列，这样可以确保每个消息仅被一个实例消费一次，增强了消息消费的幂等性和一致性。
+     * 默认情况下，unitMode 是 false，意味着消费者按照标准模式工作，可以消费多个消息队列，并且可能有多个消费者实例同时处理同一个消息队列中的消息（根据负载均衡策略）。设置为 true 后，消费者实例将更加严格地控制消息的消费，适用于需要严格顺序或者单实例处理的场景。不过，这种模式可能会限制系统的并发处理能力，因为它限制了消费者实例的并行消费能力。
      */
     private boolean unitMode = false;
 
     /**
-     * Max re-consume times. 
+     * Max re-consume times.
      * In concurrently mode, -1 means 16;
      * In orderly mode, -1 means Integer.MAX_VALUE.
-     *
+     * <p>
      * If messages are re-consumed more than {@link #maxReconsumeTimes} before success.
      */
     private int maxReconsumeTimes = -1;
@@ -278,13 +282,14 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      * @param consumerGroup Consumer group.
      */
     public DefaultMQPushConsumer(final String consumerGroup) {
+        // 默认分配策略AllocateMessageQueueAveragely，平均分配
         this(null, consumerGroup, null, new AllocateMessageQueueAveragely());
     }
 
     /**
      * Constructor specifying namespace and consumer group.
      *
-     * @param namespace Namespace for this MQ Producer instance.
+     * @param namespace     Namespace for this MQ Producer instance.
      * @param consumerGroup Consumer group.
      */
     public DefaultMQPushConsumer(final String namespace, final String consumerGroup) {
@@ -304,9 +309,9 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Constructor specifying namespace, consumer group and RPC hook .
      *
-     * @param namespace Namespace for this MQ Producer instance.
+     * @param namespace     Namespace for this MQ Producer instance.
      * @param consumerGroup Consumer group.
-     * @param rpcHook RPC hook to execute before each remoting command.
+     * @param rpcHook       RPC hook to execute before each remoting command.
      */
     public DefaultMQPushConsumer(final String namespace, final String consumerGroup, RPCHook rpcHook) {
         this(namespace, consumerGroup, rpcHook, new AllocateMessageQueueAveragely());
@@ -315,25 +320,25 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Constructor specifying consumer group, RPC hook and message queue allocating algorithm.
      *
-     * @param consumerGroup Consume queue.
-     * @param rpcHook RPC hook to execute before each remoting command.
+     * @param consumerGroup                Consume queue.
+     * @param rpcHook                      RPC hook to execute before each remoting command.
      * @param allocateMessageQueueStrategy Message queue allocating algorithm.
      */
     public DefaultMQPushConsumer(final String consumerGroup, RPCHook rpcHook,
-        AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+                                 AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
         this(null, consumerGroup, rpcHook, allocateMessageQueueStrategy);
     }
 
     /**
      * Constructor specifying namespace, consumer group, RPC hook and message queue allocating algorithm.
      *
-     * @param namespace Namespace for this MQ Producer instance.
-     * @param consumerGroup Consume queue.
-     * @param rpcHook RPC hook to execute before each remoting command.
+     * @param namespace                    Namespace for this MQ Producer instance.
+     * @param consumerGroup                Consume queue.
+     * @param rpcHook                      RPC hook to execute before each remoting command.
      * @param allocateMessageQueueStrategy Message queue allocating algorithm.
      */
     public DefaultMQPushConsumer(final String namespace, final String consumerGroup, RPCHook rpcHook,
-        AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+                                 AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
         this.consumerGroup = consumerGroup;
         this.namespace = namespace;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
@@ -343,7 +348,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Constructor specifying consumer group and enabled msg trace flag.
      *
-     * @param consumerGroup Consumer group.
+     * @param consumerGroup  Consumer group.
      * @param enableMsgTrace Switch flag instance for message trace.
      */
     public DefaultMQPushConsumer(final String consumerGroup, boolean enableMsgTrace) {
@@ -353,8 +358,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Constructor specifying consumer group, enabled msg trace flag and customized trace topic name.
      *
-     * @param consumerGroup Consumer group.
-     * @param enableMsgTrace Switch flag instance for message trace.
+     * @param consumerGroup        Consumer group.
+     * @param enableMsgTrace       Switch flag instance for message trace.
      * @param customizedTraceTopic The name value of message trace topic.If you don't config,you can use the default trace topic name.
      */
     public DefaultMQPushConsumer(final String consumerGroup, boolean enableMsgTrace, final String customizedTraceTopic) {
@@ -365,29 +370,29 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Constructor specifying consumer group, RPC hook, message queue allocating algorithm, enabled msg trace flag and customized trace topic name.
      *
-     * @param consumerGroup Consume queue.
-     * @param rpcHook RPC hook to execute before each remoting command.
+     * @param consumerGroup                Consume queue.
+     * @param rpcHook                      RPC hook to execute before each remoting command.
      * @param allocateMessageQueueStrategy message queue allocating algorithm.
-     * @param enableMsgTrace Switch flag instance for message trace.
-     * @param customizedTraceTopic The name value of message trace topic.If you don't config,you can use the default trace topic name.
+     * @param enableMsgTrace               Switch flag instance for message trace.
+     * @param customizedTraceTopic         The name value of message trace topic.If you don't config,you can use the default trace topic name.
      */
     public DefaultMQPushConsumer(final String consumerGroup, RPCHook rpcHook,
-        AllocateMessageQueueStrategy allocateMessageQueueStrategy, boolean enableMsgTrace, final String customizedTraceTopic) {
+                                 AllocateMessageQueueStrategy allocateMessageQueueStrategy, boolean enableMsgTrace, final String customizedTraceTopic) {
         this(null, consumerGroup, rpcHook, allocateMessageQueueStrategy, enableMsgTrace, customizedTraceTopic);
     }
 
     /**
      * Constructor specifying namespace, consumer group, RPC hook, message queue allocating algorithm, enabled msg trace flag and customized trace topic name.
      *
-     * @param namespace Namespace for this MQ Producer instance.
-     * @param consumerGroup Consume queue.
-     * @param rpcHook RPC hook to execute before each remoting command.
+     * @param namespace                    Namespace for this MQ Producer instance.
+     * @param consumerGroup                Consume queue.
+     * @param rpcHook                      RPC hook to execute before each remoting command.
      * @param allocateMessageQueueStrategy message queue allocating algorithm.
-     * @param enableMsgTrace Switch flag instance for message trace.
-     * @param customizedTraceTopic The name value of message trace topic.If you don't config,you can use the default trace topic name.
+     * @param enableMsgTrace               Switch flag instance for message trace.
+     * @param customizedTraceTopic         The name value of message trace topic.If you don't config,you can use the default trace topic name.
      */
     public DefaultMQPushConsumer(final String namespace, final String consumerGroup, RPCHook rpcHook,
-        AllocateMessageQueueStrategy allocateMessageQueueStrategy, boolean enableMsgTrace, final String customizedTraceTopic) {
+                                 AllocateMessageQueueStrategy allocateMessageQueueStrategy, boolean enableMsgTrace, final String customizedTraceTopic) {
         this.consumerGroup = consumerGroup;
         this.namespace = namespace;
         this.allocateMessageQueueStrategy = allocateMessageQueueStrategy;
@@ -398,7 +403,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
                 dispatcher.setHostConsumer(this.getDefaultMQPushConsumerImpl());
                 traceDispatcher = dispatcher;
                 this.getDefaultMQPushConsumerImpl().registerConsumeMessageHook(
-                    new ConsumeMessageTraceHookImpl(traceDispatcher));
+                        new ConsumeMessageTraceHookImpl(traceDispatcher));
             } catch (Throwable e) {
                 log.error("system mqtrace hook init failed ,maybe can't send msg trace data");
             }
@@ -413,7 +418,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     public void createTopic(String key, String newTopic, int queueNum) throws MQClientException {
         createTopic(key, withNamespace(newTopic), queueNum, 0);
     }
-    
+
     @Override
     public void setUseTLS(boolean useTLS) {
         super.setUseTLS(useTLS);
@@ -421,7 +426,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
             ((AsyncTraceDispatcher) traceDispatcher).getTraceProducer().setUseTLS(useTLS);
         }
     }
-    
+
     /**
      * This method will be removed in a certain version after April 5, 2020, so please do not use this method.
      */
@@ -473,7 +478,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     @Deprecated
     @Override
     public MessageExt viewMessage(
-        String offsetMsgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+            String offsetMsgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         return this.defaultMQPushConsumerImpl.viewMessage(offsetMsgId);
     }
 
@@ -483,7 +488,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     @Deprecated
     @Override
     public QueryResult queryMessage(String topic, String key, int maxNum, long begin, long end)
-        throws MQClientException, InterruptedException {
+            throws MQClientException, InterruptedException {
         return this.defaultMQPushConsumerImpl.queryMessage(withNamespace(topic), key, maxNum, begin, end);
     }
 
@@ -493,7 +498,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     @Deprecated
     @Override
     public MessageExt viewMessage(String topic,
-        String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+                                  String msgId) throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         try {
             MessageDecoder.decodeMessageId(msgId);
             return this.viewMessage(msgId);
@@ -649,21 +654,21 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
 
     /**
      * Send message back to broker which will be re-delivered in future.
-     *
+     * <p>
      * This method will be removed or it's visibility will be changed in a certain version after April 5, 2020, so
      * please do not use this method.
      *
-     * @param msg Message to send back.
+     * @param msg        Message to send back.
      * @param delayLevel delay level.
-     * @throws RemotingException if there is any network-tier error.
-     * @throws MQBrokerException if there is any broker error.
+     * @throws RemotingException    if there is any network-tier error.
+     * @throws MQBrokerException    if there is any broker error.
      * @throws InterruptedException if the thread is interrupted.
-     * @throws MQClientException if there is any client error.
+     * @throws MQClientException    if there is any client error.
      */
     @Deprecated
     @Override
     public void sendMessageBack(MessageExt msg, int delayLevel)
-        throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+            throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         msg.setTopic(withNamespace(msg.getTopic()));
         this.defaultMQPushConsumerImpl.sendMessageBack(msg, delayLevel, null);
     }
@@ -671,22 +676,22 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Send message back to the broker whose name is <code>brokerName</code> and the message will be re-delivered in
      * future.
-     *
+     * <p>
      * This method will be removed or it's visibility will be changed in a certain version after April 5, 2020, so
      * please do not use this method.
      *
-     * @param msg Message to send back.
+     * @param msg        Message to send back.
      * @param delayLevel delay level.
      * @param brokerName broker name.
-     * @throws RemotingException if there is any network-tier error.
-     * @throws MQBrokerException if there is any broker error.
+     * @throws RemotingException    if there is any network-tier error.
+     * @throws MQBrokerException    if there is any broker error.
      * @throws InterruptedException if the thread is interrupted.
-     * @throws MQClientException if there is any client error.
+     * @throws MQClientException    if there is any client error.
      */
     @Deprecated
     @Override
     public void sendMessageBack(MessageExt msg, int delayLevel, String brokerName)
-        throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
+            throws RemotingException, MQBrokerException, InterruptedException, MQClientException {
         msg.setTopic(withNamespace(msg.getTopic()));
         this.defaultMQPushConsumerImpl.sendMessageBack(msg, delayLevel, brokerName);
     }
@@ -703,9 +708,12 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
      */
     @Override
     public void start() throws MQClientException {
+        // liuyunMark：消费者组补全
         setConsumerGroup(NamespaceUtil.wrapNamespace(this.getNamespace(), this.consumerGroup));
+        // liuyunMark：消费者启动方法真实入口
         this.defaultMQPushConsumerImpl.start();
         if (null != traceDispatcher) {
+            // liuyunMark：消息轨迹设置，如果开启的话
             try {
                 traceDispatcher.start(this.getNamesrvAddr(), this.getAccessChannel());
             } catch (MQClientException e) {
@@ -757,9 +765,9 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Subscribe a topic to consuming subscription.
      *
-     * @param topic topic to subscribe.
+     * @param topic         topic to subscribe.
      * @param subExpression subscription expression.it only support or operation such as "tag1 || tag2 || tag3" <br>
-     * if null or * expression,meaning subscribe all
+     *                      if null or * expression,meaning subscribe all
      * @throws MQClientException if there is any client error.
      */
     @Override
@@ -770,8 +778,8 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Subscribe a topic to consuming subscription.
      *
-     * @param topic topic to consume.
-     * @param fullClassName full class name,must extend org.apache.rocketmq.common.filter. MessageFilter
+     * @param topic             topic to consume.
+     * @param fullClassName     full class name,must extend org.apache.rocketmq.common.filter. MessageFilter
      * @param filterClassSource class source code,used UTF-8 file encoding,must be responsible for your code safety
      */
     @Override
@@ -782,7 +790,7 @@ public class DefaultMQPushConsumer extends ClientConfig implements MQPushConsume
     /**
      * Subscribe a topic by message selector.
      *
-     * @param topic topic to consume.
+     * @param topic           topic to consume.
      * @param messageSelector {@link org.apache.rocketmq.client.consumer.MessageSelector}
      * @see org.apache.rocketmq.client.consumer.MessageSelector#bySql
      * @see org.apache.rocketmq.client.consumer.MessageSelector#byTag

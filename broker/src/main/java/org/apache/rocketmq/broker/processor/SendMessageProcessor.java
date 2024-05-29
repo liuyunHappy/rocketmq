@@ -113,6 +113,17 @@ public class SendMessageProcessor extends AbstractSendMessageProcessor {
             this.brokerController.getMessageStore().isTransientStorePoolDeficient();
     }
 
+    /**
+     * liuyunMark
+     * 这个函数是用于异步发送消息回退的。
+     * 它首先创建一个响应对象，然后解析请求的自定义头部信息，获取相关的订阅组配置。如果存在消费消息的钩子并且原始消息ID不为空，则执行消费消息的钩子。
+     * 然后根据订阅组配置的重试队列数量判断是否需要进行后续操作。如果需要，则根据请求信息创建一个新的重试主题，并进行一系列的权限检查和消息查询操作。
+     * 最后，根据消息的重试次数和延迟级别，决定将消息发送到哪个主题和队列，并执行消息的存储操作。如果存储成功，则返回成功的响应，否则返回系统的错误响应。
+     * @param ctx
+     * @param request
+     * @return
+     * @throws RemotingCommandException
+     */
     private CompletableFuture<RemotingCommand> asyncConsumerSendMsgBack(ChannelHandlerContext ctx,
                                                                         RemotingCommand request) throws RemotingCommandException {
         final RemotingCommand response = RemotingCommand.createResponseCommand(null);

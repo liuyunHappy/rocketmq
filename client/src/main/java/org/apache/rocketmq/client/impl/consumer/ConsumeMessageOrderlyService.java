@@ -94,10 +94,12 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
 
     public void start() {
         if (MessageModel.CLUSTERING.equals(ConsumeMessageOrderlyService.this.defaultMQPushConsumerImpl.messageModel())) {
+            // liuyunMark: 周期性批量锁定消息队列
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
                 @Override
                 public void run() {
                     try {
+
                         ConsumeMessageOrderlyService.this.lockMQPeriodically();
                     } catch (Throwable e) {
                         log.error("scheduleAtFixedRate lockMQPeriodically exception", e);
@@ -494,7 +496,7 @@ public class ConsumeMessageOrderlyService implements ConsumeMessageService {
                                         this.messageQueue);
                                     break;
                                 }
-
+                                // liuyunMark 消费者按批有序次消费消息
                                 status = messageListener.consumeMessage(Collections.unmodifiableList(msgs), context);
                             } catch (Throwable e) {
                                 log.warn(String.format("consumeMessage exception: %s Group: %s Msgs: %s MQ: %s",

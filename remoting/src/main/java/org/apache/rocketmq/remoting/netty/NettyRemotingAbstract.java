@@ -71,6 +71,13 @@ public abstract class NettyRemotingAbstract {
 
     /**
      * This map caches all on-going requests.
+     * liuyunMark
+     * 在RocketMQ的Remoting模块中，NettyRemotingAbstract类中的responseTable属性是一个ConcurrentHashMap，它的作用如下：
+     * 存储响应关联：这个响应表用于存储请求与响应之间的关联。当客户端发起一个RPC请求时，会生成一个唯一的opaque（通常是一个整数标识符），并将这个标识符与一个ResponseFuture对象关联。
+     * 异步处理：ResponseFuture对象通常包含一个回调或者未来的响应结果。当服务器返回响应时，responseTable被用来查找对应的ResponseFuture，从而将响应数据传递给等待的调用者。
+     * 超时管理：responseTable还常用于实现超时检测机制。如果在指定时间内没有收到响应，可以根据opaque从表中找到对应的ResponseFuture并触发超时处理。
+     * 线程安全：由于使用了ConcurrentHashMap，在多线程环境下，多个请求和响应的处理可以并发进行，保证了数据一致性。
+     * 简而言之，responseTable是实现RocketMQ Remoting层异步通信和管理请求响应对的核心组件。
      */
     protected final ConcurrentMap<Integer /* opaque */, ResponseFuture> responseTable =
         new ConcurrentHashMap<Integer, ResponseFuture>(256);
@@ -585,6 +592,7 @@ public abstract class NettyRemotingAbstract {
 
             final ChannelEventListener listener = NettyRemotingAbstract.this.getChannelEventListener();
 
+            // liuyunMark 对netty接收到的事件处理：从eventQueue中拉取事件处理
             while (!this.isStopped()) {
                 try {
                     NettyEvent event = this.eventQueue.poll(3000, TimeUnit.MILLISECONDS);

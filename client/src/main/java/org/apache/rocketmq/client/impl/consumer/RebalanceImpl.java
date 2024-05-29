@@ -164,6 +164,12 @@ public abstract class RebalanceImpl {
         return false;
     }
 
+    /**
+     * liuyunMark: 该函数用于批量锁定消息队列。
+     * 首先，它根据broker名称构建一个处理队列表，然后遍历表中的每个broker。
+     * 对于每个非空的broker，它尝试通过调用lockBatchMQ方法来锁定消息队列。
+     * 如果锁定成功，则将相应的处理队列设置为已锁定状态；如果锁定失败，则将相应的处理队列设置为未锁定状态。
+     */
     public void lockAll() {
         HashMap<String, Set<MessageQueue>> brokerMqs = this.buildProcessQueueTableByBrokerName();
 

@@ -51,6 +51,11 @@ public class NamesrvStartup {
         main0(args);
     }
 
+    /**
+     * liuyunMark 启动入口
+     * @param args
+     * @return
+     */
     public static NamesrvController main0(String[] args) {
 
         try {
@@ -136,7 +141,7 @@ public class NamesrvStartup {
         if (null == controller) {
             throw new IllegalArgumentException("NamesrvController is null");
         }
-
+        // liuyunMark 初始化
         boolean initResult = controller.initialize();
         if (!initResult) {
             controller.shutdown();

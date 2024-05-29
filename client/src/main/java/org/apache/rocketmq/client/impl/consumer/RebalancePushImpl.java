@@ -32,6 +32,16 @@ import org.apache.rocketmq.common.protocol.heartbeat.ConsumeType;
 import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.common.protocol.heartbeat.SubscriptionData;
 
+/**
+ * liuyunMark
+ * 它主要用于管理消费者的订阅主题和消息队列的平衡过程。具体功能包括：
+ * 自动拉取消息: 实现了基于推送（Push）模式的再平衡逻辑，即消费者不需要主动拉取消息，而是由 Broker 主动推送消息给消费者。当消费者启动或消费者组内的消费者实例变化时，RebalancePushImpl 负责触发消息队列的再平衡操作。
+ * 分配策略: 使用分配策略（如 AllocateMessageQueueAveragely）来决定哪个消费者应该消费哪些消息队列。
+ * 订阅信息管理: 维护消费者的订阅关系，确保消费者只接收其订阅范围内的消息。
+ * 监听心跳: 监听与 Broker 的心跳，以检测网络连接状态，并在需要时触发再平衡。
+ * 处理消费失败: 如果消费者处理消息失败，RebalancePushImpl 可能会参与重试或回滚消息的逻辑。
+ * 总之，RebalancePushImpl 是 RocketMQ Push 模式下消费者端的再平衡核心实现，它确保了消息的正确路由和消费者组内的负载均衡。
+ */
 public class RebalancePushImpl extends RebalanceImpl {
     private final static long UNLOCK_DELAY_TIME_MILLS = Long.parseLong(System.getProperty("rocketmq.client.unlockDelayTimeMills", "20000"));
     private final DefaultMQPushConsumerImpl defaultMQPushConsumerImpl;

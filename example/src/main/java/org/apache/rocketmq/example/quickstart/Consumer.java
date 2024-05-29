@@ -36,6 +36,7 @@ public class Consumer {
         /*
          * Instantiate with specified consumer group name.
          */
+        // liuyunMark：构建消费者对象，指定消息队列分配策略
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(CONSUMER_GROUP);
 
         /*
@@ -50,21 +51,24 @@ public class Consumer {
          * </pre>
          */
         // Uncomment the following line while debugging, namesrvAddr should be set to your local address
-//        consumer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
+        consumer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
 
         /*
          * Specify where to start in case the specific consumer group is a brand-new one.
          */
-        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+//        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+        consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
 
         /*
          * Subscribe one more topic to consume.
          */
+        // liuyunMark：主题相关配置
         consumer.subscribe(TOPIC, "*");
 
         /*
          *  Register callback to execute on arrival of messages fetched from brokers.
          */
+        // liuyunMark：配置消息消费监听器
         consumer.registerMessageListener((MessageListenerConcurrently) (msg, context) -> {
             System.out.printf("%s Receive New Messages: %s %n", Thread.currentThread().getName(), msg);
             return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
@@ -73,6 +77,7 @@ public class Consumer {
         /*
          *  Launch the consumer instance.
          */
+        // liuyunMark：启动消费者服务
         consumer.start();
 
         System.out.printf("Consumer Started.%n");

@@ -85,6 +85,18 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.remoting.netty.NettyClientConfig;
 import org.apache.rocketmq.remoting.protocol.RemotingCommand;
 
+/**
+ * liuyunMark
+ * 它是 RocketMQ 客户端的核心实例，主要负责以下功能：
+ * 客户端管理: 代表一个 RocketMQ 客户端实例，管理着客户端的配置、运行状态和相关资源。
+ * 消费者与生产者共享: MQClientInstance 既服务于消息生产者也服务于消息消费者，为两者提供公共的服务，如注册与注销、心跳维护、消息路由信息的获取等。
+ * 消息路由: 通过与 NameServer 的交互，获取和更新消息主题的路由信息，以便生产者知道如何发送消息，消费者知道从哪里拉取消息。
+ * 线程池与调度: 管理内部的工作线程池，执行各种异步任务，如发送心跳、处理响应等。
+ * 资源复用: 根据客户端标识（ClientID）保证在同一配置下只有一个实例，避免资源的重复创建，提高效率。
+ * 连接管理: 管理与服务器的连接，包括建立、维护和断开连接。
+ * 监控与日志: 提供客户端的监控信息，包括但不限于消费进度、错误日志等。
+ * MQClientInstance 是 RocketMQ 客户端的中枢，它协调和封装了与 RocketMQ 服务端交互的大部分逻辑，是客户端操作的基础。
+ */
 public class MQClientInstance {
     private final static long LOCK_TIMEOUT_MILLIS = 3000;
     private final InternalLogger log = ClientLogger.getLog();
@@ -226,6 +238,7 @@ public class MQClientInstance {
 
         synchronized (this) {
             switch (this.serviceState) {
+                // 启动前状态，本次开始启动
                 case CREATE_JUST:
                     this.serviceState = ServiceState.START_FAILED;
                     // If not specified,looking address from name server
@@ -233,14 +246,19 @@ public class MQClientInstance {
                         this.mQClientAPIImpl.fetchNameServerAddr();
                     }
                     // Start request-response channel
+                    //liuyunMark: 启动netty client端程序
                     this.mQClientAPIImpl.start();
                     // Start various schedule tasks
+                    //liuyunMark:
                     this.startScheduledTask();
                     // Start pull service
+                    //liuyunMark: 循环进行消息拉取
                     this.pullMessageService.start();
                     // Start rebalance service
+                    //liuyunMark: 消费端负载均衡
                     this.rebalanceService.start();
                     // Start push service
+                    //liuyunMark: TODO ？
                     this.defaultMQProducer.getDefaultMQProducerImpl().start(false);
                     log.info("the client factory [{}] start OK", this.clientId);
                     this.serviceState = ServiceState.RUNNING;
@@ -254,6 +272,7 @@ public class MQClientInstance {
     }
 
     private void startScheduledTask() {
+        // liuyunMark: 若nameSvr地址没有配置，则启动定时任务进行查询或拉取
         if (null == this.clientConfig.getNamesrvAddr()) {
             this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
@@ -268,6 +287,7 @@ public class MQClientInstance {
             }, 1000 * 10, 1000 * 60 * 2, TimeUnit.MILLISECONDS);
         }
 
+        // liuyunMark: 从nameserver定时拉取topic路由信息，并更新缓存
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -280,6 +300,7 @@ public class MQClientInstance {
             }
         }, 10, this.clientConfig.getPollNameServerInterval(), TimeUnit.MILLISECONDS);
 
+        // liuyunMark: 定时任务清除离线的broker，与正常的broker发送心跳请求
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -293,6 +314,7 @@ public class MQClientInstance {
             }
         }, 1000, this.clientConfig.getHeartbeatBrokerInterval(), TimeUnit.MILLISECONDS);
 
+        // liuyunMark 定时持久化消费offset
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -305,6 +327,7 @@ public class MQClientInstance {
             }
         }, 1000 * 10, this.clientConfig.getPersistConsumerOffsetInterval(), TimeUnit.MILLISECONDS);
 
+        // liuyunMark 定时任务调整消费线程池的大小，当前方法体为空，没有起作用
         this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
 
             @Override
@@ -560,6 +583,7 @@ public class MQClientInstance {
                                     this.brokerVersionTable.put(brokerName, new HashMap<String, Integer>(4));
                                 }
                                 this.brokerVersionTable.get(brokerName).put(addr, version);
+                                // liuyunMark 打印日志的数量是心跳数量的1/20，避免频繁打印
                                 if (times % 20 == 0) {
                                     log.info("send heart beat to broker[{} {} {}] success", brokerName, id, addr);
                                     log.info(heartbeatData.toString());
@@ -579,6 +603,13 @@ public class MQClientInstance {
         }
     }
 
+    /**
+     * liuyunMark
+     * 该函数用于上传过滤类源代码到所有的过滤服务器。
+     * 函数首先遍历消费者表，找到被动消费类型的消费者。然后，获取该消费者的订阅信息，遍历每个订阅数据。
+     * 如果订阅数据使用类过滤模式，并且有过滤类源代码，就将消费者组、类名、主题和过滤类源代码作为参数调用uploadFilterClassToAllFilterServer方法。
+     * 如果出现异常，则记录错误日志。
+     */
     private void uploadFilterClassSource() {
         Iterator<Entry<String, MQConsumerInner>> it = this.consumerTable.entrySet().iterator();
         while (it.hasNext()) {
@@ -620,6 +651,7 @@ public class MQClientInstance {
                             }
                         }
                     } else {
+                        //liuyunMark: client 获取topic的路由信息
                         topicRouteData = this.mQClientAPIImpl.getTopicRouteInfoFromNameServer(topic, clientConfig.getMqClientApiTimeout());
                     }
                     if (topicRouteData != null) {
@@ -633,12 +665,13 @@ public class MQClientInstance {
 
                         if (changed) {
                             TopicRouteData cloneTopicRouteData = topicRouteData.cloneTopicRouteData();
-
+                            //liuyunMark: 更新缓存brokerAddrTable
                             for (BrokerData bd : topicRouteData.getBrokerDatas()) {
                                 this.brokerAddrTable.put(bd.getBrokerName(), bd.getBrokerAddrs());
                             }
 
                             // Update Pub info
+                            //liuyunMark: 更新缓存producerTable中的topicPublishInfoTable
                             if (!producerTable.isEmpty()) {
                                 TopicPublishInfo publishInfo = topicRouteData2TopicPublishInfo(topic, topicRouteData);
                                 publishInfo.setHaveTopicRouterInfo(true);
@@ -653,6 +686,7 @@ public class MQClientInstance {
                             }
 
                             // Update sub info
+                            //liuyunMark: 更新缓存consumerTable中的topicSubscribeInfoTable
                             if (!consumerTable.isEmpty()) {
                                 Set<MessageQueue> subscribeInfo = topicRouteData2TopicSubscribeInfo(topic, topicRouteData);
                                 Iterator<Entry<String, MQConsumerInner>> it = this.consumerTable.entrySet().iterator();
@@ -665,6 +699,7 @@ public class MQClientInstance {
                                 }
                             }
                             log.info("topicRouteTable.put. Topic = {}, TopicRouteData[{}]", topic, cloneTopicRouteData);
+                            //liuyunMark: 更新缓存topicRouteTable
                             this.topicRouteTable.put(topic, cloneTopicRouteData);
                             return true;
                         }

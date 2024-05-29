@@ -39,6 +39,16 @@ import org.apache.rocketmq.common.protocol.body.ProcessQueueInfo;
 
 /**
  * Queue consumption snapshot
+ * liuyunMark
+ * 它是消费者端处理消息的核心数据结构。它的主要作用包括：
+ * 消息缓存：ProcessQueue 用于缓存从 Broker 拉取下来待消费的消息，提供了一个本地消息队列的概念。
+ * 消费状态跟踪：它维护了消息的消费状态，比如哪些消息已经被消费，哪些还在队列中等待消费。
+ * 消费失败重试：当消息消费失败时，ProcessQueue 可以将消息放回队列，以便后续重试。
+ * 平衡负载：在多线程或分布式环境中的消费者实例之间，ProcessQueue 参与负载均衡策略，确保消息的公平分配。
+ * 消费进度快照：它提供了消费进度的快照，用于在消费者故障恢复或者切换时恢复消费位置。
+ * 流量控制：ProcessQueue 还参与了消费者的流量控制机制，防止消费者过快拉取导致内存压力过大。
+ * 监控与管理：ProcessQueue 的状态（如是否被锁定、是否满载）是监控系统健康和性能的关键指标。
+ * 总之，ProcessQueue 是 RocketMQ 消费模型中的一个重要组件，它协调了消息的存储、消费和重试逻辑，保证了消息的可靠消费。
  */
 public class ProcessQueue {
     public final static long REBALANCE_LOCK_MAX_LIVE_TIME =

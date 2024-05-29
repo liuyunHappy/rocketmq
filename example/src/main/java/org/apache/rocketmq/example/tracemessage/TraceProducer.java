@@ -30,14 +30,16 @@ public class TraceProducer {
     public static final String TOPIC = "TopicTest";
     public static final String TAG = "TagA";
     public static final String KEY = "OrderID188";
-    public static final int MESSAGE_COUNT = 128;
+//    public static final int MESSAGE_COUNT = 128;
+    public static final int MESSAGE_COUNT = 1;
 
     public static void main(String[] args) throws MQClientException, InterruptedException {
 
         DefaultMQProducer producer = new DefaultMQProducer(PRODUCER_GROUP, true);
+//        DefaultMQProducer producer = new DefaultMQProducer(PRODUCER_GROUP);
 
         // Uncomment the following line while debugging, namesrvAddr should be set to your local address
-//        producer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
+        producer.setNamesrvAddr(DEFAULT_NAMESRVADDR);
         producer.start();
 
         for (int i = 0; i < MESSAGE_COUNT; i++) {
